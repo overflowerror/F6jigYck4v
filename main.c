@@ -58,7 +58,7 @@ unsigned long long convertFromString(const char* string) {
 			}
 		}
 		if (!found) {
-			error("Parsing error.\n");
+			error("Parsing error.\nUnexpected character '%c'.\n", string[i]);
 			exit(3);
 		}
 	}
@@ -167,7 +167,7 @@ settings_t getSettings() {
 		maxBits = findMax(maxValue);
 
 		if (maxBits <= 0) {
-			error("length or charset is too big.");
+			error("Length or charset is too big. This should not have happend.\n");
 			exit(3);
 		}
 	}
@@ -258,26 +258,37 @@ void prepareCharset() {
 	charset = inflatedCharset;
 }
 
-int main(int argc, char** argv) {
-	int opt;
+void help(const char* name) {
+	printf("SYNOPSIS: %s [OPTIONS] INPUT\n\n", name);
+	printf("options: \n");
+	printf("   -e          encode INPUT (default)\n");
+	printf("   -d          decode INPUT\n");
+	printf("   -l  LENGTH  set the length (default: 10)\n");
+	printf("   -c  CHARSET set the charset (default: a-zA-Z0-9)\n");
+	printf("   -o  OFFSET  set the offset (default: 5)\n");
+	printf("   -v          enable verbose mode\n");
+	printf("   -h          show this help message\n\n");
+}
 
+int main(int argc, char** argv) {
 	bool decodeMode = false;
 
+	int opt;
 	char* endptr;
 
-	while((opt = getopt(argc, argv, "o:c:l:dev")) != -1) {
+	while((opt = getopt(argc, argv, "o:c:l:devh")) != -1) {
 		switch(opt) {
 			case 'o':
 				offset = strtol(optarg, &endptr, 10);
 				if (*endptr != 0) {
-					error("Argument for -o has to be a number.\n");
+					error("Argument for -o has to be a number.\nTry -h to get help.\n");
 					exit(2);
 				}
 				break;
 			case 'l':
 				resultLength = strtol(optarg, &endptr, 10);
 				if (*endptr != 0) {
-					error("Argument of -l has to be a number.\n");
+					error("Argument of -l has to be a number.\nTry -h to get help.\n");
 					exit(2);
 				}
 				break;
@@ -293,14 +304,17 @@ int main(int argc, char** argv) {
 			case 'v':
 				verbose = true;
 				break;
+			case 'h':
+				help(argv[0]);
+				exit(0);
 			default:
-				error("Unknown option.\n");
+				error("Unknown option.\nTry -h to get help.\n");
 				exit(2);
 		}
 	}
 
 	if (optind >= argc) {
-		error("Expected data after options.\n");
+		error("Expected data after options.\nTry -h to get help.\n");
 		exit(2);
 	}
 
@@ -322,12 +336,12 @@ int main(int argc, char** argv) {
 	} else {
 		unsigned long long value = strtoll(argv[optind], &endptr, 10);
 		if (*endptr != 0) {
-			error("Value has to be a number.\n");
+			error("Value has to be a number for encoding.\n");
 			exit(2);
 		}
 		value += offset;
 		if (value > settings.max) {
-			error("value is too big!\n");
+			error("value is too big!\nThe maximum value for the current settings is %llu.\n", settings.max - offset);
 			exit(1);
 		}
 		verbose("encode mode\n");
