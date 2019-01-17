@@ -265,7 +265,7 @@ int main(int argc, char** argv) {
 
 	char* endptr;
 
-	while((opt = getopt(argc, argv, "o:c:l:dv")) != -1) {
+	while((opt = getopt(argc, argv, "o:c:l:dev")) != -1) {
 		switch(opt) {
 			case 'o':
 				offset = strtol(optarg, &endptr, 10);
@@ -283,6 +283,9 @@ int main(int argc, char** argv) {
 				break;
 			case 'c':
 				charset = optarg;
+				break;
+			case 'e':
+				decodeMode = false;
 				break;
 			case 'd':
 				decodeMode = true;
