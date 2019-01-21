@@ -276,7 +276,7 @@ int main(int argc, char** argv) {
 	int opt;
 	char* endptr;
 
-	while((opt = getopt(argc, argv, "o:c:l:devh")) != -1) {
+	while((opt = getopt(argc, argv, "o:c:l:devhy")) != -1) {
 		switch(opt) {
 			case 'o':
 				offset = strtol(optarg, &endptr, 10);
@@ -307,6 +307,9 @@ int main(int argc, char** argv) {
 			case 'h':
 				help(argv[0]);
 				exit(0);
+			case 'y':
+				charset = "0-9A-Za-z-_";
+				break;
 			default:
 				error("Unknown option.\nTry -h to get help.\n");
 				exit(2);
