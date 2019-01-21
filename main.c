@@ -150,7 +150,7 @@ unsigned long long decode(unsigned long long value, unsigned long long prime, un
 
 	unsigned long long inverse = multiplicativeInverse(prime, maxValue);
 
-	verbose("inverse:    %llu\n", inverse);
+	//verbose("inverse:    %llu\n", inverse);
 
 	tmp *= inverse;
 	tmp &= (maxValue);
