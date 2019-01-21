@@ -6,8 +6,11 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <time.h>
+#include <errno.h>
+#include <limits.h>
 
 typedef __uint128_t uint128_t;
+typedef __int128_t int128_t;
 
 const char* charset = "a-zA-Z0-9";
 int inverseCharset[(1 << 7)] = {-1};
@@ -102,19 +105,26 @@ unsigned long long encode(unsigned long long value, unsigned long long prime, un
 
 	result *= prime;
 
-	result &= (maxValue - 1);
+	result &= (maxValue);
 
 	return (unsigned long long) result;
 }
 
-unsigned long long multiplicativeInverse(unsigned long long a, unsigned long long b) {
+unsigned long long multiplicativeInverse(unsigned long long prime, unsigned long long maxValue) {
 	/*
 	 * I didn't write this. 
 	 * I got this from https://rosettacode.org/wiki/Modular_inverse#C 
-	 * and adopted it to use long long data types.
+	 * and adopted it to use signed 128 bit data types (something else 
+	 * wouldn't work, because we need a signed bit and 64 bits for the 
+	 * value).
 	 */
-	long long b0 = b, t, q;
-	long long x0 = 0, x1 = 1;
+	int128_t a = prime;
+	// we need the modulo value and not the maxium
+	int128_t b = maxValue;
+	b += 1;
+
+	int128_t b0 = b, t, q;
+	int128_t x0 = 0, x1 = 1;
 	if (b == 1)
 		return 1;
 	while (a > 1) {
@@ -137,8 +147,13 @@ unsigned long long decode(unsigned long long value, unsigned long long prime, un
 	 */
 
 	uint128_t tmp = value;
-	tmp *= multiplicativeInverse(prime, maxValue);
-	tmp &= (maxValue - 1);
+
+	unsigned long long inverse = multiplicativeInverse(prime, maxValue);
+
+	verbose("inverse:    %llu\n", inverse);
+
+	tmp *= inverse;
+	tmp &= (maxValue);
 
 	return (unsigned long long) tmp;
 }
@@ -154,9 +169,9 @@ settings_t getSettings() {
 	unsigned long long maxValue;
 	int maxBits; 
 
-	if (maxValueDouble > pow(2, 64)) {
-		verbose("Max value %.0lf > 2^64, caping to 63 bits.\n", maxValueDouble);
-		maxBits = 63;
+	if (maxValueDouble >= pow(2, 65)) {
+		verbose("Max value %.0lf > 2^64, caping to 64 bits.\n", maxValueDouble);
+		maxBits = 64;
 	} else {
 		maxValue = (unsigned long long) maxValueDouble;
 		verbose("theoer max: %llu\n", maxValue);
@@ -168,7 +183,18 @@ settings_t getSettings() {
 		}
 	}
 
-	maxValue = 1ll << maxBits;
+	if (maxBits == 64) {
+		/* 
+		 * we want to avoid undefined behaviour.
+		 * so instead of using an underflow we'll 
+		 * make this one explicit.
+		 */
+		maxValue = ULLONG_MAX;
+
+	} else {
+		maxValue = 1ll << maxBits;
+		maxValue--;
+	}
 
 	verbose("used bits:  %d\n", maxBits);
 	verbose("max:        %llu\n", maxValue);
@@ -205,7 +231,6 @@ unsigned long long fromString(const char* string, settings_t settings) {
 		clock_gettime(CLOCK_MONOTONIC, &before);
 	#endif
 
-	verbose("test\n");
 	unsigned long long result = convertFromString(string);
 	verbose("encoded:    %llu\n", result);
 	result = decode(result, settings.prime, settings.max);
@@ -367,9 +392,13 @@ int main(int argc, char** argv) {
 		value -= offset;
 		printf("%llu\n", value);
 	} else {
-		unsigned long long value = strtoll(argv[optind], &endptr, 10);
+		unsigned long long value = strtoull(argv[optind], &endptr, 10);
 		if (*endptr != 0) {
 			error("Value has to be a number for encoding.\n");
+			exit(2);
+		}
+		if (value == ULLONG_MAX && errno == ERANGE) {
+			error("Value overflows the internal datatype.\n");
 			exit(2);
 		}
 		value += offset;
