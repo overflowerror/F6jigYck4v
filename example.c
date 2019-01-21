@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
 			exit(2);
 		}
 
-		char* string = malloc(settings.length);
+		char* string = malloc(settings.length + 1);
 
 		tmp = sfuid_encode(value, string);
 
