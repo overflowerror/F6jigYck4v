@@ -9,7 +9,8 @@
 
 typedef __uint128_t uint128_t;
 
-char* charset = "a-zA-Z0-9";
+const char* charset = "a-zA-Z0-9";
+int inverseCharset[(1 << 7)] = {-1};
 unsigned int resultLength = 10;
 unsigned int offset = 5;
 bool verbose = false;
@@ -49,19 +50,13 @@ unsigned long long convertFromString(const char* string) {
 
 	for (int i = 0; i < stringLength; i++) {
 		bool found = false;
-		for(int j = 0; j < charsetLength; j++) {
-			if (charset[j] == string[i]) {
-				found = true;
-				unsigned long long val = ((unsigned long long) pow(charsetLength, stringLength - i - 1));
-				//printf("position %d, digit %d, value %d\n", i, j, val);;
-				result += ((unsigned long long) j) * val;
-				break;
-			}
-		}
-		if (!found) {
+		int tmp = inverseCharset[string[i]];
+		if (tmp < 0) {
 			error("Parsing error.\nUnexpected character '%c'.\n", string[i]);
 			exit(3);
 		}
+		unsigned long long val = ((unsigned long long) pow(charsetLength, stringLength - i - 1));
+		result += ((unsigned long long) tmp) * val;
 	}
 
 	return result;
@@ -248,7 +243,7 @@ void prepareCharset() {
 	verbose("prepareing charset\n");
 
 	int size = strlen(charset);
-	char* tmp;
+	const char* tmp;
 
 	for(int i = 0; i < ((sizeof shortcuts) / (sizeof shortcuts[0])); i++) {
 		tmp = charset;
@@ -268,7 +263,8 @@ void prepareCharset() {
 		for (int i = 0; i < ((sizeof shortcuts) / (sizeof shortcuts[0])); i++) {
 			tmp = strstr(inflatedCharset, shortcuts[i].needle);
 			if ((tmp != NULL) && ((first == NULL) || (tmp < first))) {
-				first = tmp;
+				// we declared tmp as const char* but now we are using it for char
+				first = (char*) tmp;
 				replace = shortcuts[i].replacement;
 			}
 		}	
@@ -283,6 +279,12 @@ void prepareCharset() {
 	//verbose("full charset: %s\n", inflatedCharset);
 
 	charset = inflatedCharset;
+}
+
+void prepareInverseCharset() {
+	for(int i = 0; i < strlen(charset); i++) {
+		inverseCharset[charset[i]] = i;
+	}
 }
 
 void help(const char* name) {
@@ -357,6 +359,7 @@ int main(int argc, char** argv) {
 	settings_t settings = getSettings();
 
 	if (decodeMode) {
+		prepareInverseCharset();
 		verbose("decode mode\n");
 		const char* string = argv[optind];
 		verbose("string:     %s\n", string);
