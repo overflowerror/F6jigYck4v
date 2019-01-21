@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <time.h>
 
 typedef __uint128_t uint128_t;
 
@@ -186,16 +187,42 @@ settings_t getSettings() {
 }
 
 void toString(char* string, unsigned long long value, settings_t settings) {
+	#ifdef BENCHMARK
+		struct timespec before, after;
+		clock_gettime(CLOCK_MONOTONIC, &before);
+	#endif
+
 	value = encode(value, settings.prime, settings.max);
 	verbose("encoded:    %llu\n", value);
 	convertToString(string, value);
+
+	#ifdef BENCHMARK
+		clock_gettime(CLOCK_MONOTONIC, &after);
+
+		unsigned long long diff = (int64_t)(after.tv_sec - before.tv_sec) * (int64_t) 1000000000UL + (int64_t)(after.tv_nsec - before.tv_nsec);
+		fprintf(stderr, "Time for conversion: %llu ns\n", diff);
+	#endif
 }
 
 unsigned long long fromString(const char* string, settings_t settings) {
+	#ifdef BENCHMARK
+		struct timespec before, after;
+		clock_gettime(CLOCK_MONOTONIC, &before);
+	#endif
+
 	verbose("test\n");
 	unsigned long long result = convertFromString(string);
 	verbose("encoded:    %llu\n", result);
 	result = decode(result, settings.prime, settings.max);
+
+	#ifdef BENCHMARK
+		clock_gettime(CLOCK_MONOTONIC, &after);
+
+		unsigned long long diff = (int64_t)(after.tv_sec - before.tv_sec) * (int64_t) 1000000000UL + (int64_t)(after.tv_nsec - before.tv_nsec);
+		fprintf(stderr, "Time for conversion: %llu ns\n", diff);
+	#endif
+
+
 	return result;
 }
 
