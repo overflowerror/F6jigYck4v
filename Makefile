@@ -1,11 +1,22 @@
 
-all: F6jigYck4v
+all: libsfuid.so example
 
-benchmark: main.c
-	gcc -lm -DBENCHMARK -o $@ $<
+libsfuid.so: lib/sfuid.o
+	@echo Linking shared object...
+	@gcc -shared -o $@ $^
 
-F6jigYck4v: main.c
-	gcc -lm -o $@ $<
+example: example.o libsfuid.so
+	@echo Linking example program...
+	@gcc -L. -lsfuid -lm -o $@ $<
+
+example.o: lib/sfuid.h
+lib/sfuid.o: lib/sfuid.h
+
+%.o: %.c
+	@echo Compiling $<...
+	@gcc -Wall -fPIC -c $< -o $@
 
 clean:
-	rm F6jigYck4v
+	@rm *.o
+	@rm lib/*.o
+	@rm *.so example
