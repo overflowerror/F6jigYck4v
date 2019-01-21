@@ -21,8 +21,8 @@ bool verbose = false;
 #define verbose(...) if (verbose) printf(__VA_ARGS__);
 #define error(...) fprintf(stderr, __VA_ARGS__)
 
-int convertToString(char* string, unsigned long long number) {
-	unsigned charsetLength = strlen(charset);
+int convertToString(char* string, uint64_t number) {
+	int charsetLength = strlen(charset);
 
 	int length = 0;
 	do {
@@ -45,8 +45,8 @@ int convertToString(char* string, unsigned long long number) {
 	return length;
 }
 
-unsigned long long convertFromString(const char* string) {
-	unsigned long long result = 0;
+uint64_t convertFromString(const char* string) {
+	uint64_t result = 0;
 
 	int stringLength = strlen(string);
 	int charsetLength = strlen(charset);
@@ -58,14 +58,14 @@ unsigned long long convertFromString(const char* string) {
 			error("Parsing error.\nUnexpected character '%c'.\n", string[i]);
 			exit(3);
 		}
-		unsigned long long val = ((unsigned long long) pow(charsetLength, stringLength - i - 1));
-		result += ((unsigned long long) tmp) * val;
+		uint64_t val = ((uint64_t) pow(charsetLength, stringLength - i - 1));
+		result += ((uint64_t) tmp) * val;
 	}
 
 	return result;
 }
 
-unsigned long long primelist[] = {
+uint64_t primelist[] = {
 	1, 1, 1, 3, 7, 13, 29, 61, 113, 251, 509, 1021, 2039, 4093, 8179, 16381,
 	32749, 65521, 131063, 262139, 524269, 1048573, 2097143, 4194301,
 	8388593, 16777213, 33554393, 67108859, 134217689, 268435399, 
@@ -81,9 +81,9 @@ unsigned long long primelist[] = {
 	1152921504606846883ll, 2305843009213693921ll // 61
 };
 
-int findMax(unsigned long long theoreticalMax) {
+int findMax(uint64_t theoreticalMax) {
 	int result = 0;
-	unsigned long long tmp = 0;
+	uint64_t tmp = 0;
 	while(true) {
 		if (tmp >= theoreticalMax)
 			break;
@@ -92,7 +92,7 @@ int findMax(unsigned long long theoreticalMax) {
 	return result - 1;
 }
 
-unsigned long long findPrime(int maxBit) {
+uint64_t findPrime(int maxBit) {
 	int primelistLength = (sizeof primelist) / (sizeof (long long));
 	if (maxBit >= primelistLength)
 		return primelist[primelistLength - 1];
@@ -100,17 +100,17 @@ unsigned long long findPrime(int maxBit) {
 	return primelist[maxBit - 1];
 }
 
-unsigned long long encode(unsigned long long value, unsigned long long prime, unsigned long long maxValue) {
+uint64_t encode(uint64_t value, uint64_t prime, uint64_t maxValue) {
 	uint128_t result = value;
 
 	result *= prime;
 
 	result &= (maxValue);
 
-	return (unsigned long long) result;
+	return (uint64_t) result;
 }
 
-unsigned long long multiplicativeInverse(unsigned long long prime, unsigned long long maxValue) {
+uint64_t multiplicativeInverse(uint64_t prime, uint64_t maxValue) {
 	/*
 	 * I didn't write this. 
 	 * I got this from https://rosettacode.org/wiki/Modular_inverse#C 
@@ -137,7 +137,7 @@ unsigned long long multiplicativeInverse(unsigned long long prime, unsigned long
 	return x1;
 }
 
-unsigned long long decode(unsigned long long value, unsigned long long prime, unsigned long long maxValue) {
+uint64_t decode(uint64_t value, uint64_t prime, uint64_t maxValue) {
 	/* 
 	 * (x * p) mod m = v
 	 * (x * p) == v   (mod m)
@@ -148,32 +148,32 @@ unsigned long long decode(unsigned long long value, unsigned long long prime, un
 
 	uint128_t tmp = value;
 
-	unsigned long long inverse = multiplicativeInverse(prime, maxValue);
+	uint64_t inverse = multiplicativeInverse(prime, maxValue);
 
 	//verbose("inverse:    %llu\n", inverse);
 
 	tmp *= inverse;
 	tmp &= (maxValue);
 
-	return (unsigned long long) tmp;
+	return (uint64_t) tmp;
 }
 
 typedef struct settings {
-	unsigned long long max;
-	unsigned long long prime;
+	uint64_t max;
+	uint64_t prime;
 } settings_t;
 
 settings_t getSettings() {
 	verbose("charset length: %d\n", strlen(charset));
 	double maxValueDouble = pow(strlen(charset), resultLength);
-	unsigned long long maxValue;
+	uint64_t maxValue;
 	int maxBits; 
 
 	if (maxValueDouble >= pow(2, 65)) {
 		verbose("Max value %.0lf > 2^64, caping to 64 bits.\n", maxValueDouble);
 		maxBits = 64;
 	} else {
-		maxValue = (unsigned long long) maxValueDouble;
+		maxValue = (uint64_t) maxValueDouble;
 		verbose("theoer max: %llu\n", maxValue);
 		maxBits = findMax(maxValue);
 
@@ -200,14 +200,14 @@ settings_t getSettings() {
 	verbose("max:        %llu\n", maxValue);
 	verbose("usage:      %.1f%\n", (100.0 * maxValue / maxValueDouble));
 
-	unsigned long long prime = findPrime(maxBits);
+	uint64_t prime = findPrime(maxBits);
 
 	verbose("prime:      %llu\n", prime);
 
 	return (settings_t) {.max = maxValue, .prime = prime};
 }
 
-void toString(char* string, unsigned long long value, settings_t settings) {
+void toString(char* string, uint64_t value, settings_t settings) {
 	#ifdef BENCHMARK
 		struct timespec before, after;
 		clock_gettime(CLOCK_MONOTONIC, &before);
@@ -220,25 +220,25 @@ void toString(char* string, unsigned long long value, settings_t settings) {
 	#ifdef BENCHMARK
 		clock_gettime(CLOCK_MONOTONIC, &after);
 
-		unsigned long long diff = (int64_t)(after.tv_sec - before.tv_sec) * (int64_t) 1000000000UL + (int64_t)(after.tv_nsec - before.tv_nsec);
+		uint64_t diff = (int64_t)(after.tv_sec - before.tv_sec) * (int64_t) 1000000000UL + (int64_t)(after.tv_nsec - before.tv_nsec);
 		fprintf(stderr, "Time for conversion: %llu ns\n", diff);
 	#endif
 }
 
-unsigned long long fromString(const char* string, settings_t settings) {
+uint64_t fromString(const char* string, settings_t settings) {
 	#ifdef BENCHMARK
 		struct timespec before, after;
 		clock_gettime(CLOCK_MONOTONIC, &before);
 	#endif
 
-	unsigned long long result = convertFromString(string);
+	uint64_t result = convertFromString(string);
 	verbose("encoded:    %llu\n", result);
 	result = decode(result, settings.prime, settings.max);
 
 	#ifdef BENCHMARK
 		clock_gettime(CLOCK_MONOTONIC, &after);
 
-		unsigned long long diff = (int64_t)(after.tv_sec - before.tv_sec) * (int64_t) 1000000000UL + (int64_t)(after.tv_nsec - before.tv_nsec);
+		uint64_t diff = (int64_t)(after.tv_sec - before.tv_sec) * (int64_t) 1000000000UL + (int64_t)(after.tv_nsec - before.tv_nsec);
 		fprintf(stderr, "Time for conversion: %llu ns\n", diff);
 	#endif
 
@@ -388,11 +388,11 @@ int main(int argc, char** argv) {
 		verbose("decode mode\n");
 		const char* string = argv[optind];
 		verbose("string:     %s\n", string);
-		unsigned long long value = fromString(string, settings);
+		uint64_t value = fromString(string, settings);
 		value -= offset;
 		printf("%llu\n", value);
 	} else {
-		unsigned long long value = strtoull(argv[optind], &endptr, 10);
+		uint64_t value = strtoull(argv[optind], &endptr, 10);
 		if (*endptr != 0) {
 			error("Value has to be a number for encoding.\n");
 			exit(2);
