@@ -189,7 +189,7 @@ settings_t getSettings() {
 		 * so instead of using an underflow we'll 
 		 * make this one explicit.
 		 */
-		maxValue = ULLONG_MAX;
+		maxValue = UINT64_MAX;
 
 	} else {
 		maxValue = 1ll << maxBits;
