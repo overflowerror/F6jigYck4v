@@ -1,4 +1,6 @@
 
+CFLAGS = -Wall -fPIC
+
 all: libsfuid.so example
 
 libsfuid.so: lib/sfuid.o
@@ -14,9 +16,16 @@ lib/sfuid.o: lib/sfuid.h
 
 %.o: %.c
 	@echo Compiling $<...
-	@gcc -Wall -fPIC -c $< -o $@
+	@gcc ${CFLAGS} -c $< -o $@
+
+benchmark: CFLAGS += -DBENCHMARK
+benchmark: clean example
+	@mv example benchmark
+	@rm -f lib/*.o
 
 clean:
-	@rm *.o
-	@rm lib/*.o
-	@rm *.so example
+	@rm -f *.o
+	@rm -f lib/*.o
+	@rm -f *.so
+	@rm -f example
+	@rm -f benchmark

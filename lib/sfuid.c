@@ -331,6 +331,11 @@ int sfuid_encode(uint64_t value, char* string) {
 	if (!settingsValid)
 		return SFUID_ERROR_SETTINGS_INVALID;
 
+	#ifdef BENCHMARK
+		struct timespec before, after;
+		clock_gettime(CLOCK_MONOTONIC, &before);
+	#endif
+
 	value += settings.offset;
 
 	if (value > properties.max) 
@@ -341,10 +346,26 @@ int sfuid_encode(uint64_t value, char* string) {
 	if (tmp != SFUID_ERROR_NONE)
 		return tmp;
 
+	#ifdef BENCHMARK
+		clock_gettime(CLOCK_MONOTONIC, &after);
+		unsigned long long diff = (int64_t)(after.tv_sec - before.tv_sec) * (int64_t) 1000000000UL + (int64_t)(after.tv_nsec - before.tv_nsec);
+		fprintf(stderr, "Time for conversion: %llu ns\n", diff);
+	#endif
+
+
 	return SFUID_ERROR_NONE;
 }
 
 int sfuid_decode(const char* string, uint64_t* value) {
+	if (!settingsValid)
+		return SFUID_ERROR_SETTINGS_INVALID;
+
+	#ifdef BENCHMARK
+		struct timespec before, after;
+		clock_gettime(CLOCK_MONOTONIC, &before);
+	#endif
+
+
 	int tmp = convertFromString(string, value);
 	if (tmp != SFUID_ERROR_NONE)
 		return tmp;
@@ -354,6 +375,12 @@ int sfuid_decode(const char* string, uint64_t* value) {
 		return tmp;
 
 	*value -= settings.offset;
+
+	#ifdef BENCHMARK
+		clock_gettime(CLOCK_MONOTONIC, &after);
+		unsigned long long diff = (int64_t)(after.tv_sec - before.tv_sec) * (int64_t) 1000000000UL + (int64_t)(after.tv_nsec - before.tv_nsec);
+		fprintf(stderr, "Time for conversion: %llu ns\n", diff);
+	#endif
 
 	return SFUID_ERROR_NONE;
 }
