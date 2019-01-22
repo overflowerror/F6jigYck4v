@@ -55,7 +55,7 @@ It's basically a kind of MCG (multiplicative congruential generator) but instead
 
 So the formular to get a specific ID is: 
 
-![s(i) := p\*i mod m](https://latex.codecogs.com/gif.download?s%28i%29%20%3A%3D%20p%20%5Ccdot%20i%20%5Cmod%20m)
+![s(i) := p\*i mod m](https://raw.githubusercontent.com/overflowerror/null/master/projects/libsfuid/formular.gif?token=AEuWLXTFaZj0xp6HvvskmihKWeIQcRIdks5cR6sxwA%3D%3D)
 
 The condition for p and m is that their GCD is 1. I chose m to be a power of 2 so it's prime factors are only 2. For p I chose a prime that is about 25 % of m. For that I hardcoded a list of possible primes candidated into the program.
 
