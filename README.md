@@ -32,7 +32,7 @@ about 2 µs. I provided the benchmark script I used in case you want to check on
 Probably not. The lib needs a 128 bit integer type. So I don't think this is working on any 32 bit machines. Also the type 
 definition I used is specific for GCC. If you get it to work on another compiler, please tell me.
 
-## How can I use it.
+## How can I use it?
 
 Oh, that's pretty simple.
 
@@ -48,3 +48,20 @@ sfuid_encode(42, string);
 uint64_t result;
 sfuid_decode(string, &result);
 ```
+
+## How does this work?
+
+It's basically a kind of MCG (multiplicative congruential generator) but instead of the last entry in the series beeing the factor I used the current ID. That means the result is not as random because the distance between consecutive ID is basically constant. The reason I did this is to save computation time (also 128 bit won't be enough for numbers that size).
+
+So the formular to get a specific ID is: 
+
+![s(i) := p\*i mod m](https://latex.codecogs.com/gif.download?s%28i%29%20%3A%3D%20p%20%5Ccdot%20i%20%5Cmod%20m)
+
+The condition for p and m is that their GCD is 1. I chose m to be a power of 2 so it's prime factors are only 2. For p I chose a prime that is about 25 % of m. For that I hardcoded a list of possible primes candidated into the program.
+
+To make it most efficient the program calculates m to be the greatest power of 2 that fits in the output space.
+For example: Let's our character set is "0-9" (10 characters) and the length of the result is 4, the output space would be 10^4. The biggest power of 2 in that space is 2^13. That's our m. The p would be 2039 (about 25 % of m).
+
+(Note to myself: Maybe just using a big Mersenne prime (like 2^61-1) would also work. That would maximize the output space efficiency, because it's guaranteed that x^y with y > 1 is not a prime.)
+
+The result of the MCG is then converted into the string by treating it as a number with the length of the charset as its basis.
